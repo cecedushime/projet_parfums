@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'apps.products',
     'apps.orders',
     'apps.common',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -47,6 +48,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -142,3 +144,9 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API de gestion de parfums avec authentification JWT',
     'VERSION': '1.0.0',
 }
+
+# Autorise React (port 5173) à communiquer avec Django
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
