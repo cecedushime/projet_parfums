@@ -8,6 +8,7 @@ function App() {
     const [loading, setLoading] = useState(true);
     const [panier, setPanier] = useState([]);
     const [isPanierOpen, setIsPanierOpen] = useState(false);
+    const [isCommandeEnCours, setIsCommandeEnCours] = useState(false);
 
     useEffect(() => {
         fetch('http://127.0.0.1:8000/api/v1/parfums/')
@@ -37,6 +38,42 @@ function App() {
         setPanier(panier.filter(item => item.id !== id));
     };
 
+    const passerCommande = async () => {
+        setIsCommandeEnCours(true);
+        
+        // On prépare les données pour Django (ID et quantité)
+        const commandeData = {
+            panier: panier.map(item => ({ id: item.id, quantite: item.quantite }))
+        };
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/v1/commandes/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'Authorization': `Bearer ${tonToken}` // À décommenter quand tu auras le login
+                },
+                credentials: 'include',
+                body: JSON.stringify(commandeData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert("🎉 Commande réussie ! Merci pour votre achat.");
+                setPanier([]); // On vide le panier local
+                setIsPanierOpen(false); // On ferme le panneau
+            } else {
+                alert(`Erreur : ${data.error || 'Problème lors de la commande'}`);
+            }
+        } catch (error) {
+            console.error("Erreur réseau :", error);
+            alert("Impossible de contacter le serveur.");
+        } finally {
+            setIsCommandeEnCours(false);
+        }
+    };
+
     const totalArticles = panier.reduce((total, item) => total + item.quantite, 0);
 
     if (loading) {
@@ -45,7 +82,6 @@ function App() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* On appelle notre composant Header */}
             <Header 
                 totalArticles={totalArticles} 
                 onOuvrirPanier={() => setIsPanierOpen(true)} 
@@ -69,12 +105,13 @@ function App() {
                 )}
             </main>
 
-            {/* On appelle notre composant PanneauPanier si ouvert */}
             {isPanierOpen && (
                 <PanneauPanier 
                     panier={panier} 
                     onFermer={() => setIsPanierOpen(false)}
                     onSupprimer={supprimerDuPanier}
+                    onCommander={passerCommande} // 👈 On passe la fonction au bouton
+                    isCommandeEnCours={isCommandeEnCours} // 👈 On passe l'état de chargement
                 />
             )}
         </div>

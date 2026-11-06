@@ -1,4 +1,4 @@
-function PanneauPanier({ panier, onFermer, onSupprimer }) {
+function PanneauPanier({ panier, onFermer, onSupprimer, onCommander, isCommandeEnCours }) {
     const total = panier.reduce((acc, item) => acc + (parseFloat(item.prix) * item.quantite), 0);
 
     return (
@@ -40,11 +40,13 @@ function PanneauPanier({ panier, onFermer, onSupprimer }) {
                         <span className="text-lg font-bold text-gray-800">Total :</span>
                         <span className="text-2xl font-bold text-black">{total.toFixed(2)} AED</span>
                     </div>
+                    
                     <button 
+                        onClick={onCommander}
+                        disabled={panier.length === 0 || isCommandeEnCours}
                         className="w-full bg-black text-white py-3 rounded font-bold hover:bg-gray-800 transition disabled:bg-gray-400"
-                        disabled={panier.length === 0}
                     >
-                        Passer la commande
+                        {isCommandeEnCours ? "Traitement en cours... ⏳" : "Passer la commande"}
                     </button>
                 </div>
             </div>

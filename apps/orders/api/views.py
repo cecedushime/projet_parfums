@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db import transaction
 
 from ..models import Panier, Commande, DetailCommande
@@ -94,10 +94,9 @@ class PanierViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
-class CommandeViewSet(viewsets.ReadOnlyModelViewSet):
+class CommandeViewSet(viewsets.ModelViewSet):
     """
-    ViewSet pour consulter les commandes de l'utilisateur.
-    (Lecture seule pour les utilisateurs normaux)
+    ViewSet pour gérer les commandes (Création et Lecture).
     """
     serializer_class = CommandeSerializer
     permission_classes = [IsAuthenticated]
@@ -107,7 +106,64 @@ class CommandeViewSet(viewsets.ReadOnlyModelViewSet):
         return Commande.objects.filter(client=self.request.user)
     
     def get_serializer_context(self):
-        """Ajoute la requête pour que le sérializer puisse utiliser le client."""
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+    def create(self, request, *args, **kwargs):
+        """
+        Crée une commande à partir du panier envoyé par React.
+        Exemple de body JSON : { "panier": [ {"id": 1, "quantite": 2} ] }
+        """
+        panier_data = request.data.get('panier', [])
+        
+        if not panier_data:
+            return Response(
+                {"error": "Le panier est vide."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            with transaction.atomic(): # Sécurité : si ça plante, tout est annulé
+                total = 0
+                parfums_a_commander = []
+                
+                # 1. Vérification des stocks et calcul du total
+                for item in panier_data:
+                    parfum = Parfum.objects.get(id=item['id'])
+                    quantite = item['quantite']
+                    
+                    if parfum.quantite_stock < quantite:
+                        raise ValueError(f"Stock insuffisant pour le parfum : {parfum.nom}")
+                    
+                    total += parfum.prix * quantite
+                    parfums_a_commander.append((parfum, quantite))
+
+                # 2. Création de la commande
+                commande = Commande.objects.create(
+                    client=request.user,
+                    total=total,
+                    adresse_livraison="Adresse par défaut", 
+                    status='en_attente'
+                )
+
+                # 3. Création des détails et mise à jour du stock
+                for parfum, quantite in parfums_a_commander:
+                    DetailCommande.objects.create(
+                        commande=commande,
+                        parfum=parfum,
+                        quantite=quantite,
+                        prix_unitaire=parfum.prix
+                    )
+                    parfum.quantite_stock -= quantite
+                    parfum.save()
+
+            return Response(
+                {"message": "Commande créée avec succès !", "commande_id": commande.id},
+                status=status.HTTP_201_CREATED
+            )
+
+        except Parfum.DoesNotExist:
+            return Response({"error": "Un des parfums n'existe pas."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
