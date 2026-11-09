@@ -1,28 +1,27 @@
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 
-from ..models import Parfum
-from .serializers import ParfumSerializer
+from ..models import ProduitInformatique
+from .serializers import ProduitSerializer
 from core.permissions import IsAdminOrReadOnly
 from core.pagination import StandardPagination
 
-class ParfumViewSet(viewsets.ModelViewSet):
+class ProduitViewSet(viewsets.ModelViewSet):
     """
-    ViewSet pour gérer les parfums.
+    ViewSet pour gérer les produits informatiques.
     
     Actions disponibles :
-    - GET /parfums/ : Liste tous les parfums
-    - POST /parfums/ : Crée un nouveau parfum (admin uniquement)
-    - GET /parfums/{id}/ : Détail d'un parfum
-    - PUT /parfums/{id}/ : Modifie un parfum (admin uniquement)
-    - DELETE /parfums/{id}/ : Supprime un parfum (admin uniquement)
-    - GET /parfums/disponibles/ : Liste des parfums en stock
+    - GET /produits/ : Liste tous les produits
+    - POST /produits/ : Crée un nouveau produit (admin uniquement)
+    - GET /produits/{id}/ : Détail d'un produit
+    - PUT /produits/{id}/ : Modifie un produit (admin uniquement)
+    - DELETE /produits/{id}/ : Supprime un produit (admin uniquement)
+    - GET /produits/disponibles/ : Liste des produits en stock
     """
-    queryset = Parfum.objects.all()
-    serializer_class = ParfumSerializer
+    queryset = ProduitInformatique.objects.all()
+    serializer_class = ProduitSerializer
     permission_classes = [IsAdminOrReadOnly]
     pagination_class = StandardPagination
     
@@ -34,16 +33,14 @@ class ParfumViewSet(viewsets.ModelViewSet):
     filterset_fields = [
         'categorie',
         'marque',
-        'concentration',
         'est_disponible'
     ]
     search_fields = [
         'nom',
         'description',
         'marque',
-        'notes_tete',
-        'notes_coeur',
-        'notes_fond'
+        'processeur',
+        'carte_graphique'
     ]
     ordering_fields = [
         'prix',
@@ -60,46 +57,46 @@ class ParfumViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def disponibles(self, request):
         """
-        Action personnalisée : retourne les parfums disponibles.
-        URL : /parfums/disponibles/
+        Action personnalisée : retourne les produits disponibles.
+        URL : /produits/disponibles/
         """
-        parfums = Parfum.objects.filter(est_disponible=True, quantite_stock__gt=0)
-        serializer = self.get_serializer(parfums, many=True)
+        produits = ProduitInformatique.objects.filter(est_disponible=True, quantite_stock__gt=0)
+        serializer = self.get_serializer(produits, many=True)
         return Response({
             'status': 'success',
-            'count': parfums.count(),
+            'count': produits.count(),
             'results': serializer.data
         })
     
     @action(detail=True, methods=['post'])
     def acheter(self, request, pk=None):
         """
-        Action personnalisée : simule l'achat d'un parfum.
-        URL : /parfums/{id}/acheter/
+        Action personnalisée : simule l'achat d'un produit.
+        URL : /produits/{id}/acheter/
         """
-        parfum = self.get_object()
+        produit = self.get_object()
         
         # Vérifier le stock
-        if parfum.quantite_stock <= 0:
+        if produit.quantite_stock <= 0:
             return Response(
-                {'status': 'error', 'message': f"Le parfum '{parfum.nom}' n'est plus en stock."},
+                {'status': 'error', 'message': f"Le produit '{produit.nom}' n'est plus en stock."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         # Réduire le stock (simulation d'achat)
-        parfum.quantite_stock -= 1
-        if parfum.quantite_stock == 0:
-            parfum.est_disponible = False
-        parfum.save()
+        produit.quantite_stock -= 1
+        if produit.quantite_stock == 0:
+            produit.est_disponible = False
+        produit.save()
         
         return Response({
             'status': 'success',
-            'message': f"Vous avez acheté '{parfum.nom}' avec succès ! 🎉",
-            'parfum': {
-                'id': parfum.id,
-                'nom': parfum.nom,
-                'marque': parfum.marque,
-                'prix': float(parfum.prix),
-                'quantite_restante': parfum.quantite_stock
+            'message': f"Vous avez acheté '{produit.nom}' avec succès ! 🎉",
+            'produit': {
+                'id': produit.id,
+                'nom': produit.nom,
+                'marque': produit.marque,
+                'prix': float(produit.prix),
+                'quantite_restante': produit.quantite_stock
             }
         })

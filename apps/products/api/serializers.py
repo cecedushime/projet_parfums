@@ -1,32 +1,29 @@
 from rest_framework import serializers
-from ..models import Parfum
+from ..models import ProduitInformatique
 
-from rest_framework import serializers
-from ..models import Parfum
-
-class ParfumSerializer(serializers.ModelSerializer):
+class ProduitSerializer(serializers.ModelSerializer):
     """
-    Sérializer pour le modèle Parfum.
-    Transforme les données Parfum en JSON et vice-versa.
+    Sérializer pour le modèle ProduitInformatique.
+    Transforme les données d'un produit high-tech en JSON et vice-versa.
     """
     en_stock = serializers.BooleanField(read_only=True)
     
     class Meta:
-        model = Parfum
+        model = ProduitInformatique
         fields = [
             'id', 
             'nom', 
             'description', 
             'marque',
             'categorie',
-            'concentration',
+            'processeur',
+            'carte_graphique',
+            'ram',
+            'stockage',
             'prix',
             'quantite_stock',
             'est_disponible',
             'en_stock',
-            'notes_tete',
-            'notes_coeur',
-            'notes_fond',
             'image',
             'created_at',
             'updated_at'

@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import Header from './components/header';
-import CarteParfum from './components/carteParfum';
+import CarteProduit from './components/carteProduit'; 
 import PanneauPanier from './components/cartePanier';
 
 function App() {
-    const [parfums, setParfums] = useState([]);
+    const [produits, setProduits] = useState([]); 
     const [loading, setLoading] = useState(true);
     const [panier, setPanier] = useState([]);
     const [isPanierOpen, setIsPanierOpen] = useState(false);
     const [isCommandeEnCours, setIsCommandeEnCours] = useState(false);
 
     useEffect(() => {
-        fetch('http://127.0.0.1:8000/api/v1/parfums/')
+        fetch('http://127.0.0.1:8000/api/v1/produits/')
          .then(response => response.json())
          .then(data => {
-            setParfums(data.results);
+            setProduits(data.results); 
             setLoading(false);
          })
          .catch(error => {
@@ -23,14 +23,14 @@ function App() {
          });
     }, []);
 
-    const ajouterAuPanier = (parfum) => {
-        const existeDeja = panier.find(item => item.id === parfum.id);
+    const ajouterAuPanier = (produit) => { 
+        const existeDeja = panier.find(item => item.id === produit.id);
         if (existeDeja) {
             setPanier(panier.map(item => 
-                item.id === parfum.id ? { ...item, quantite: item.quantite + 1 } : item
+                item.id === produit.id ? { ...item, quantite: item.quantite + 1 } : item
             ));
         } else {
-            setPanier([...panier, { ...parfum, quantite: 1 }]);
+            setPanier([...panier, { ...produit, quantite: 1 }]);
         }
     };
 
@@ -41,7 +41,6 @@ function App() {
     const passerCommande = async () => {
         setIsCommandeEnCours(true);
         
-        // On prépare les données pour Django (ID et quantité)
         const commandeData = {
             panier: panier.map(item => ({ id: item.id, quantite: item.quantite }))
         };
@@ -51,7 +50,6 @@ function App() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // 'Authorization': `Bearer ${tonToken}` // À décommenter quand tu auras le login
                 },
                 credentials: 'include',
                 body: JSON.stringify(commandeData)
@@ -61,8 +59,8 @@ function App() {
 
             if (response.ok) {
                 alert("🎉 Commande réussie ! Merci pour votre achat.");
-                setPanier([]); // On vide le panier local
-                setIsPanierOpen(false); // On ferme le panneau
+                setPanier([]);
+                setIsPanierOpen(false);
             } else {
                 alert(`Erreur : ${data.error || 'Problème lors de la commande'}`);
             }
@@ -77,7 +75,7 @@ function App() {
     const totalArticles = panier.reduce((total, item) => total + item.quantite, 0);
 
     if (loading) {
-        return <div className="text-center mt-20 text-2xl font-bold">Chargement des parfums... ⏳</div>;
+        return <div className="text-center mt-20 text-2xl font-bold">Chargement des produits... ⏳</div>;
     }
 
     return (
@@ -88,16 +86,16 @@ function App() {
             />
 
             <main className="container mx-auto p-8">
-                <h2 className="text-3xl font-semibold mb-8 text-gray-800">Notre Collection</h2>
+                <h2 className="text-3xl font-semibold mb-8 text-gray-800">Nos Produits High-Tech</h2>
                 
-                {parfums.length === 0 ? (
-                    <p className="text-gray-500">Aucun parfum trouvé.</p>
+                {produits.length === 0 ? ( 
+                    <p className="text-gray-500">Aucun produit trouvé.</p>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {parfums.map(parfum => (
-                            <CarteParfum 
-                                key={parfum.id} 
-                                parfum={parfum} 
+                        {produits.map(produit => ( 
+                            <CarteProduit 
+                                key={produit.id} 
+                                produit={produit} 
                                 onAjouter={ajouterAuPanier} 
                             />
                         ))}
@@ -110,8 +108,8 @@ function App() {
                     panier={panier} 
                     onFermer={() => setIsPanierOpen(false)}
                     onSupprimer={supprimerDuPanier}
-                    onCommander={passerCommande} // 👈 On passe la fonction au bouton
-                    isCommandeEnCours={isCommandeEnCours} // 👈 On passe l'état de chargement
+                    onCommander={passerCommande}
+                    isCommandeEnCours={isCommandeEnCours}
                 />
             )}
         </div>

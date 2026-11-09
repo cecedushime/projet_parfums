@@ -1,5 +1,5 @@
 """
-Fichier de configuration pour l'ENVIRONNEMENT DE PRODUCTION - Projet Parfums
+Fichier de configuration pour l'ENVIRONNEMENT DE PRODUCTION - Projet SmartPC
 Utilisé sur le serveur en ligne.
 - DEBUG = False (pas d'affichage des erreurs)
 - Base de données PostgreSQL (robuste)
@@ -75,16 +75,12 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SIMPLE_JWT['SIGNING_KEY'] = SECRET_KEY
 
 # ==========================================
-# 8. PAYPAL (Mode LIVE - PAIEMENTS RÉELS)
+# 8. PAYPAL (Mode TEST pour l'instant)
 # ==========================================
-# Les clés PayPal en production doivent venir du fichier .env.
-# Ce sont les clés qui permettent de faire des vrais paiements.
-PAYPAL_SANDBOX = False
+# On garde le mode Sandbox (test) pour l'instant
+PAYPAL_SANDBOX = True 
 PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
 PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET')
-
-if not PAYPAL_CLIENT_ID or not PAYPAL_SECRET:
-    raise ValueError("Les clés PayPal doivent être définies dans .env !")
 
 # ==========================================
 # 9. ENVOI D'EMAILS (SMTP)

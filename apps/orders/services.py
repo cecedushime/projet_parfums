@@ -1,15 +1,16 @@
 from rest_framework import serializers
 from ..models import Panier, Commande, DetailCommande
-from apps.products.api.serializers import ParfumSerializer
+from apps.products.api.serializers import ProduitSerializer 
+from apps.products.models import ProduitInformatique 
 
 class PanierSerializer(serializers.ModelSerializer):
     """
     Sérializer pour le modèle Panier.
     """
-    parfum = ParfumSerializer(read_only=True)
-    parfum_id = serializers.PrimaryKeyRelatedField(
-        queryset=Parfum.objects.all(),
-        source='parfum',
+    produit = ProduitSerializer(read_only=True) 
+    produit_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProduitInformatique.objects.all(), 
+        source='produit', 
         write_only=True
     )
     sous_total = serializers.DecimalField(
@@ -22,8 +23,8 @@ class PanierSerializer(serializers.ModelSerializer):
         model = Panier
         fields = [
             'id',
-            'parfum',
-            'parfum_id',
+            'produit', 
+            'produit_id', 
             'quantite',
             'sous_total',
             'date_ajout'
@@ -34,7 +35,7 @@ class DetailCommandeSerializer(serializers.ModelSerializer):
     """
     Sérializer pour le modèle DetailCommande.
     """
-    parfum = ParfumSerializer(read_only=True)
+    produit = ProduitSerializer(read_only=True) 
     sous_total = serializers.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -45,7 +46,7 @@ class DetailCommandeSerializer(serializers.ModelSerializer):
         model = DetailCommande
         fields = [
             'id',
-            'parfum',
+            'produit', 
             'quantite',
             'prix_unitaire',
             'sous_total'

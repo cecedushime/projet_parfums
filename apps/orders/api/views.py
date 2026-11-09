@@ -6,7 +6,7 @@ from django.db import transaction
 
 from ..models import Panier, Commande, DetailCommande
 from .serializers import PanierSerializer, CommandeSerializer
-from apps.products.models import Parfum
+from apps.products.models import ProduitInformatique # 👈 Changement ici
 
 class PanierViewSet(viewsets.ModelViewSet):
     """
@@ -20,7 +20,7 @@ class PanierViewSet(viewsets.ModelViewSet):
         return Panier.objects.filter(client=self.request.user)
     
     def perform_create(self, serializer):
-        """Ajoute un parfum au panier avec l'utilisateur connecté."""
+        """Ajoute un produit au panier avec l'utilisateur connecté."""
         serializer.save(client=self.request.user)
     
     @action(detail=False, methods=['post'])
@@ -51,9 +51,9 @@ class PanierViewSet(viewsets.ModelViewSet):
         
         # Vérifier le stock pour chaque article du panier
         for item in panier:
-            if item.parfum.quantite_stock < item.quantite:
+            if item.produit.quantite_stock < item.quantite: # 👈 Changement ici
                 return Response(
-                    {'status': 'error', 'message': f"Stock insuffisant pour '{item.parfum.nom}'."},
+                    {'status': 'error', 'message': f"Stock insuffisant pour '{item.produit.nom}'."}, # 👈 Changement ici
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
@@ -71,15 +71,15 @@ class PanierViewSet(viewsets.ModelViewSet):
             for item in panier:
                 DetailCommande.objects.create(
                     commande=commande,
-                    parfum=item.parfum,
+                    produit=item.produit, # 👈 Changement ici
                     quantite=item.quantite,
-                    prix_unitaire=item.parfum.prix
+                    prix_unitaire=item.produit.prix # 👈 Changement ici
                 )
                 # Réduire le stock
-                item.parfum.quantite_stock -= item.quantite
-                if item.parfum.quantite_stock == 0:
-                    item.parfum.est_disponible = False
-                item.parfum.save()
+                item.produit.quantite_stock -= item.quantite # 👈 Changement ici
+                if item.produit.quantite_stock == 0:
+                    item.produit.est_disponible = False # 👈 Changement ici
+                item.produit.save() # 👈 Changement ici
             
             # Vider le panier
             panier.delete()
@@ -126,18 +126,18 @@ class CommandeViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic(): # Sécurité : si ça plante, tout est annulé
                 total = 0
-                parfums_a_commander = []
+                produits_a_commander = [] 
                 
                 # 1. Vérification des stocks et calcul du total
                 for item in panier_data:
-                    parfum = Parfum.objects.get(id=item['id'])
+                    produit = ProduitInformatique.objects.get(id=item['id']) 
                     quantite = item['quantite']
                     
-                    if parfum.quantite_stock < quantite:
-                        raise ValueError(f"Stock insuffisant pour le parfum : {parfum.nom}")
+                    if produit.quantite_stock < quantite:
+                        raise ValueError(f"Stock insuffisant pour le produit : {produit.nom}") 
                     
-                    total += parfum.prix * quantite
-                    parfums_a_commander.append((parfum, quantite))
+                    total += produit.prix * quantite 
+                    produits_a_commander.append((produit, quantite)) 
 
                 # 2. Création de la commande
                 commande = Commande.objects.create(
@@ -148,22 +148,22 @@ class CommandeViewSet(viewsets.ModelViewSet):
                 )
 
                 # 3. Création des détails et mise à jour du stock
-                for parfum, quantite in parfums_a_commander:
+                for produit, quantite in produits_a_commander: 
                     DetailCommande.objects.create(
                         commande=commande,
-                        parfum=parfum,
+                        produit=produit, 
                         quantite=quantite,
-                        prix_unitaire=parfum.prix
+                        prix_unitaire=produit.prix 
                     )
-                    parfum.quantite_stock -= quantite
-                    parfum.save()
+                    produit.quantite_stock -= quantite 
+                    produit.save() 
 
             return Response(
                 {"message": "Commande créée avec succès !", "commande_id": commande.id},
                 status=status.HTTP_201_CREATED
             )
 
-        except Parfum.DoesNotExist:
-            return Response({"error": "Un des parfums n'existe pas."}, status=status.HTTP_404_NOT_FOUND)
+        except ProduitInformatique.DoesNotExist: 
+            return Response({"error": "Un des produits n'existe pas."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

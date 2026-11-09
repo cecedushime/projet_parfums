@@ -1,5 +1,5 @@
 """
-Fichier contenant les permissions personnalisées pour l'API Parfums.
+Fichier contenant les permissions personnalisées pour l'API SmartPC.
 
 Les permissions sont comme des "videurs" qui vérifient qui peut faire quoi :
 - Est-ce que l'utilisateur est connecté ?
@@ -22,15 +22,20 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     mais seul l'admin peut créer/modifier/supprimer)
     """
     
-    def has_permission(self, request, view):
-        # Si la méthode est une lecture sécurisée (GET, HEAD, OPTIONS)
-        # on autorise tout le monde
-        if request.method in permissions.SAFE_METHODS:
-            return True
+    class IsAdminOrReadOnly(permissions.BasePermission):
+        """
+        Permission : 
+        - Les admins peuvent TOUT faire (GET, POST, PUT, DELETE)
+        - Les autres utilisateurs peuvent seulement LIRE (GET, HEAD, OPTIONS)
         
-        # Sinon (POST, PUT, DELETE), on vérifie que l'utilisateur
-        # est connecté ET qu'il est admin (is_staff)
-        return request.user.is_authenticated and request.user.is_staff
+        Utilisation typique : pour les produits (tout le monde peut voir,
+        mais seul l'admin peut créer/modifier/supprimer)
+        """
+        
+        def has_permission(self, request, view):
+            if request.method in permissions.SAFE_METHODS:
+                return True
+            return request.user.is_authenticated and request.user.is_staff
 
 
 # ==========================================

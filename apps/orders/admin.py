@@ -3,9 +3,9 @@ from .models import Panier, Commande, DetailCommande
 
 @admin.register(Panier)
 class PanierAdmin(admin.ModelAdmin):
-    list_display = ('client', 'parfum', 'quantite', 'date_ajout')
+    list_display = ('client', 'produit', 'quantite', 'date_ajout')
     list_filter = ('date_ajout',)
-    search_fields = ('client__username', 'parfum__nom')
+    search_fields = ('client__username', 'produit__nom') 
 
 @admin.register(Commande)
 class CommandeAdmin(admin.ModelAdmin):
@@ -15,4 +15,4 @@ class CommandeAdmin(admin.ModelAdmin):
 
 @admin.register(DetailCommande)
 class DetailCommandeAdmin(admin.ModelAdmin):
-    list_display = ('commande', 'parfum', 'quantite', 'prix_unitaire')
+    list_display = ('commande', 'produit', 'quantite', 'prix_unitaire')
